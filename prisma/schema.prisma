@@ -1,0 +1,121 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  first_name             String
+  last_name              String
+  email                  String                   @unique
+  password               String
+  id                     String                   @id @default(uuid())
+  token                  String?
+  hackathonsOrganised    Hackathon[]
+  hackathonsParticipated Hackathon_Participated[]
+  hackathonsJudged       Hackathon_Judged[]
+  teams                  User_Team[]
+  Team_Members           Team_Members[]
+}
+
+model Hackathon_Participated {
+  id           String    @id @default(uuid())
+  hackathon    Hackathon @relation(fields: [hackathon_id], references: [id])
+  hackathon_id String
+  user         User      @relation(fields: [user_id], references: [id])
+  user_id      String
+}
+
+model Hackathon_Judged {
+  id           String    @id @default(uuid())
+  hackathon    Hackathon @relation(fields: [hackathon_id], references: [id])
+  hackathon_id String
+  user         User      @relation(fields: [user_id], references: [id])
+  user_id      String
+}
+
+model User_Team {
+  id      String @id @default(uuid())
+  team    Team   @relation(fields: [team_id], references: [id])
+  team_id String
+  user    User   @relation(fields: [user_id], references: [id])
+  user_id String
+}
+
+model Hackathon {
+  id                   String             @id @default(uuid())
+  name                 String
+  description          String
+  start_date           DateTime
+  end_date             DateTime
+  application_deadline DateTime
+  application_open     DateTime
+  venue                String
+  min_team_size        Int                @default(1)
+  max_team_size        Int
+  theme                String
+  imgUrl               String
+  admin                User               @relation(fields: [user_id], references: [id])
+  user_id              String
+  rules                Json[]            @default([])
+  problem_statements   Json[]            @default([])           
+  partners             Json[]            @default([])
+  prizes               Json[]            @default([])
+  faqs                 Json[]            @default([])
+  announcements        Json[]            @default([])
+
+  winners              WinnerInHackathon[]
+  teams                ParticipantInHackathon[]
+  Hackathon_Participated Hackathon_Participated[]
+  Hackathon_Judged       Hackathon_Judged[]
+}
+
+model WinnerInHackathon {
+  id           String    @id @default(uuid())
+  hackathon    Hackathon @relation(fields: [hackathon_id], references: [id])
+  hackathon_id String
+  team         Team      @relation(fields: [team_id], references: [id])
+  team_id      String
+}
+
+model ParticipantInHackathon {
+  id           String    @id @default(uuid())
+  hackathon    Hackathon @relation(fields: [hackathon_id], references: [id])
+  hackathon_id String
+  team         Team      @relation(fields: [team_id], references: [id])
+  team_id      String
+}
+
+model Team {
+  id                     String                   @id @default(uuid())
+  name                   String
+  submission             Submission?
+  reviews                Json[]                   @default([])
+  members                Team_Members[]
+  User_Team              User_Team[]
+  WinnerInHackathon      WinnerInHackathon[]
+  ParticipantInHackathon ParticipantInHackathon[]
+}
+
+model Team_Members {
+  id      String @id @default(uuid())
+  team    Team   @relation(fields: [team_id], references: [id])
+  team_id String
+  user    User   @relation(fields: [user_id], references: [id])
+  user_id String
+}
+
+model Submission {
+  id          String   @id @default(uuid())
+  team        Team     @relation(fields: [team_id], references: [id])
+  team_id     String   @unique
+  title       String
+  description String
+  links       String[] @default([])
+}
